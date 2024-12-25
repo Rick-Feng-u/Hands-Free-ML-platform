@@ -29,6 +29,10 @@ transform_config = TransformationConfigs()
 transform_utils = TransformationUtils()
 
 def transform_dags(intertval_list: list) -> dict:
+    """
+    This transformation DAG is used to perform data manipulation on raw data
+    to create model ready features for model hub later to inference or evaluate later
+    """
     dags_dict = {}
     for current_intertval in intertval_list:
         dag_name = transform_config.DAGS_ID + "_" + current_intertval
@@ -54,40 +58,56 @@ def transform_dags(intertval_list: list) -> dict:
                         trigger_dag_id=next_dag_name,
                     )
 
-                    num_for_serial_cluster = 1
-                    for data_dependency_id in data_dependency_dict.keys():
-                        data_dependency_list = data_dependency_dict[data_dependency_id]
-                        cluster_name = base_cluster_name + "_clust_" + str(num_for_serial_cluster)
-                        strongly_connected_task_group_id = data_dependency_id.upper()
-                        with TaskGroup(group_id=strongly_connected_task_group_id) as task_group:
-                            num_for_serial_cluster += 1
+                    try:
+                        num_for_serial_cluster = 1
 
-                            spin_up_cluster = (
-                                TransfromCreateDataProcClusterOperator(cluster_name=cluster_name)
-                            )
+                        for data_dependency_id in data_dependency_dict.keys():
+                            data_dependency_list = data_dependency_dict[data_dependency_id]
+                            # For example Transformation_
+                            cluster_name = base_cluster_name + "_clust_" + str(num_for_serial_cluster)
+                            strongly_connected_task_group_id = data_dependency_id.upper()
 
-                            submit_spark_jobs = transform_utils.create_submit_spark_jobs(
-                                cluster_name=cluster_name,
-                                dependency_list=data_dependency_list,
-                                dependency_id=data_dependency_id,
-                                dag_id=dag_name,
-                            )
+                            with TaskGroup(group_id=strongly_connected_task_group_id):
+                                num_for_serial_cluster += 1
 
-                            shut_done_cluster = (
-                                TransfromDeleteDataProcClusterOperator(cluster_name=cluster_name)
-                            )
+                                spin_up_cluster = (
+                                    TransfromCreateDataProcClusterOperator(cluster_name=cluster_name)
+                                )
 
-                            spark_jobs_sorted_list = sorted(submit_spark_jobs.keys())
+                                submit_spark_jobs = transform_utils.create_submit_spark_jobs(
+                                    cluster_name=cluster_name,
+                                    dependency_list=data_dependency_list,
+                                    dependency_id=data_dependency_id,
+                                    dag_id=dag_name,
+                                )
 
-                            spin_up_cluster >> submit_spark_jobs[spark_jobs_sorted_list[0]]
+                                shut_done_cluster = (
+                                    TransfromDeleteDataProcClusterOperator(cluster_name=cluster_name)
+                                )
 
-                            if len(spark_jobs_sorted_list) > 1:
-                                for i in range(len(spark_jobs_sorted_list) - 1):
-                                    submit_spark_jobs[spark_jobs_sorted_list[i]] >> submit_spark_jobs[spark_jobs_sorted_list[i + 1]]
+                                spark_jobs_sorted_list = None
+                                # General idea is spin_up >> [all stages} >> shut-down
+                                try:
+                                    # since stages have dependency, this need to be sorted(stage1 >> stage2)
+                                    spark_jobs_sorted_list = sorted(submit_spark_jobs.keys())
 
-                            submit_spark_jobs[spark_jobs_sorted_list[-1]] >> shut_done_cluster
+                                    spin_up_cluster >> submit_spark_jobs[spark_jobs_sorted_list[0]]
 
-                            submit_spark_jobs[spark_jobs_sorted_list[-1]] >> trigger_next_dag
+                                    if len(spark_jobs_sorted_list) > 1:
+                                        for i in range(len(spark_jobs_sorted_list) - 1):
+                                            submit_spark_jobs[spark_jobs_sorted_list[i]] >> submit_spark_jobs[
+                                                spark_jobs_sorted_list[i + 1]]
+
+                                except Exception as e:
+                                    raise print(f"Unable to create and/or submit spark jobs: {e}")
+
+                                submit_spark_jobs[spark_jobs_sorted_list[-1]] >> shut_done_cluster
+
+                                submit_spark_jobs[spark_jobs_sorted_list[-1]] >> trigger_next_dag
+
+                    except Exception as e:
+                        raise print(f"Unable to create stages: {e}")
+
 
                 except Exception as e:
                     raise print(f"Issues with data dependency {current_intertval}: {e}")
