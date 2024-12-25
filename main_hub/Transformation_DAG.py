@@ -35,8 +35,11 @@ def transform_dags(intertval_list: list) -> dict:
     """
     dags_dict = {}
     for current_intertval in intertval_list:
+        # For example Transformation_biweekly
         dag_name = transform_config.DAGS_ID + "_" + current_intertval
+        # For example Transformation_biweekly
         base_cluster_name = transform_config.CLUSTER_ID + "_" + current_intertval
+        # For example model_hub
         next_dag_name = transform_config.NEXT_DAG_ID
 
         with DAG(
@@ -63,8 +66,9 @@ def transform_dags(intertval_list: list) -> dict:
 
                         for data_dependency_id in data_dependency_dict.keys():
                             data_dependency_list = data_dependency_dict[data_dependency_id]
-                            # For example Transformation_
+                            # For example Transformation_biweekly_clust_3
                             cluster_name = base_cluster_name + "_clust_" + str(num_for_serial_cluster)
+                            # For example weekly_temperature
                             strongly_connected_task_group_id = data_dependency_id.upper()
 
                             with TaskGroup(group_id=strongly_connected_task_group_id):
