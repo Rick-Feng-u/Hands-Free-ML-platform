@@ -101,6 +101,7 @@ def transform_dags(intertval_list: list) -> dict:
 
 dags = transform_dags(intertval_list = transform_config.INTERTVAL_LIST)
 
+main_hub_biweekly = dags["main_hub_biweekly"]
 
 
 
