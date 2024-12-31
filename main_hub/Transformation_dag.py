@@ -1,5 +1,3 @@
-import json
-from datetime import datetime, date
 from pathlib import Path
 from airflow import DAG
 from airflow.utils.task_group import TaskGroup
@@ -7,10 +5,10 @@ from airflow.utils.task_group import TaskGroup
 try:
     from ml_platform.main_hub.configs.transformation_configs import (TransformationConfigs,)
     from ml_platform.main_hub.operators.Transformation_operators import (
-        TransfromCreateDataProcClusterOperator,
-        TransfromDeleteDataProcClusterOperator,
-        TransfromPythonOperator,
-        TransfromTriggerNextDag,
+        TransformCreateDataProcClusterOperator,
+        TransformDeleteDataProcClusterOperator,
+        TransformPythonOperator,
+        TransformTriggerNextDag,
     )
     from ml_platform.main_hub.util.Transformation_util import (TransformationUtils, )
 
@@ -18,10 +16,10 @@ except:
     sys.path.append(str(Path(__file__).resolve().parents[1]))
     from main_hub.config.Transformation_config import (TransformationConfigs,)
     from main_hub.operators.Transformation_operators import (
-        TransfromCreateDataProcClusterOperator,
-        TransfromDeleteDataProcClusterOperator,
-        TransfromPythonOperator,
-        TransfromTriggerNextDag,
+        TransformCreateDataProcClusterOperator,
+        TransformDeleteDataProcClusterOperator,
+        TransformPythonOperator,
+        TransformTriggerNextDag,
     )
     from main_hub.util.Transformation_util import (TransformationUtils,)
 
@@ -56,7 +54,7 @@ def transform_dags(intertval_list: list) -> dict:
                     print("Data dependency dictionary loaded")
                     print("Got current run date")
 
-                    trigger_next_dag = TransfromTriggerNextDag(
+                    trigger_next_dag = TransformTriggerNextDag(
                         task_id=f"trigger_{next_dag_name}",
                         trigger_dag_id=next_dag_name,
                     )
@@ -75,7 +73,7 @@ def transform_dags(intertval_list: list) -> dict:
                                 num_for_serial_cluster += 1
 
                                 spin_up_cluster = (
-                                    TransfromCreateDataProcClusterOperator(cluster_name=cluster_name)
+                                    TransformCreateDataProcClusterOperator(cluster_name=cluster_name)
                                 )
 
                                 submit_spark_jobs = transform_utils.create_submit_spark_jobs(
@@ -86,7 +84,7 @@ def transform_dags(intertval_list: list) -> dict:
                                 )
 
                                 shut_done_cluster = (
-                                    TransfromDeleteDataProcClusterOperator(cluster_name=cluster_name)
+                                    TransformDeleteDataProcClusterOperator(cluster_name=cluster_name)
                                 )
 
                                 spark_jobs_sorted_list = None
