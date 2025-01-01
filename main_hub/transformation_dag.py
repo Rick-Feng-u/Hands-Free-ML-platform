@@ -12,7 +12,7 @@ try:
     )
     from ml_platform.main_hub.util.transformation_util import (TransformationUtils, )
 
-except:
+except ImportError:
     sys.path.append(str(Path(__file__).resolve().parents[1]))
     from main_hub.config.transformation_config import (TransformationConfigs, )
     from main_hub.operators.transformation_operators import (

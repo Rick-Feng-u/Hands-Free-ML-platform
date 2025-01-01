@@ -19,7 +19,7 @@ from global_files.operators.cluster_operators import (
 )
 try:
     from ml_platform.main_hub.configs.transformation_configs import (TransformationConfigs,)
-except:
+except ImportError:
     sys.path.append(str(Path(__file__).resolve().parents[1]))
     from main_hub.config.transformation_config import (TransformationConfigs, )
 
