@@ -46,7 +46,7 @@ def transform_dags(intertval_list: list) -> dict:
             schedule_interval=None,
             on_failure_callback=None,
             on_success_callback=None,
-            default_args=transform_config.default_args.get_config_dict()
+            default_args=transform_config.dag_config.get_config_dict()
         ) as dags:
             print("Loading data dependency dictionary")
             data_dependency_dict = transform_utils.get_data_dependency(current_intertval)
