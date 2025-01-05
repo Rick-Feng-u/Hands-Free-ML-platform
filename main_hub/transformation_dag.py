@@ -92,7 +92,7 @@ def transform_dags(interval_list: list) -> dict:
                                 # General idea is spin_up >> [all stages} >> shut-down
                                 try:
                                     # since stages have dependency, this need to be sorted(stage1 >> stage2)
-                                    spark_jobs_sorted_list = sorted(submit_spark_jobs.keys())
+                                    spark_jobs_sorted_list = sorted(submit_spark_jobs.keys()) #TODO this will have problem when stage >= 10 since sorted will considering stage10 before stage2
 
                                     spin_up_cluster >> submit_spark_jobs[spark_jobs_sorted_list[0]]
 
