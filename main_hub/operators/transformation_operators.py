@@ -31,7 +31,7 @@ class TransformationClusterConfig(ClusterConfig):
                  m_machine_type: str,
                  w_machine_type: str,
                  spark_prop: dict,
-                 dp_config: Optional[Any] = TransformationConfigs.DP_CONFIG,
+                 dp_config: Optional[Any] = transformation_config.dp_config,
                  **kwargs
                  ):
         super(TransformationClusterConfig, self).__init__(

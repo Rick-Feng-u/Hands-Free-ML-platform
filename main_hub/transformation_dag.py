@@ -9,7 +9,7 @@ try:
         TransformCreateDataProcClusterOperator,
         TransformDeleteDataProcClusterOperator,
         TransformPythonOperator,
-        TransformTriggerNextDag,
+        TransformTriggerDagOperator,
     )
     from ml_platform.main_hub.util.transformation_util import (TransformationUtils, )
 
@@ -20,24 +20,24 @@ except ImportError:
         TransformCreateDataProcClusterOperator,
         TransformDeleteDataProcClusterOperator,
         TransformPythonOperator,
-        TransformTriggerNextDag,
+        TransformTriggerDagOperator,
     )
     from main_hub.util.transformation_util import (TransformationUtils, )
 
 transform_config = TransformationConfigs()
 transform_utils = TransformationUtils()
 
-def transform_dags(intertval_list: list) -> dict:
+def transform_dags(interval_list: list) -> dict:
     """
     This transformation DAG is used to perform data manipulation on raw data
     to create model ready features for model hub later to inference or evaluate later
     """
     dags_dict = {}
-    for current_intertval in intertval_list:
+    for current_interval in interval_list:
         # For example Transformation_biweekly
-        dag_name = transform_config.DAGS_ID + "_" + current_intertval
+        dag_name = transform_config.DAGS_ID + "_" + current_interval
         # For example Transformation_biweekly
-        base_cluster_name = transform_config.CLUSTER_ID + "_" + current_intertval
+        base_cluster_name = transform_config.CLUSTER_ID + "_" + current_interval
         # For example model_hub
         next_dag_name = transform_config.NEXT_DAG_ID
 
@@ -46,16 +46,16 @@ def transform_dags(intertval_list: list) -> dict:
             schedule_interval=None,
             on_failure_callback=None,
             on_success_callback=None,
-            default_args=transform_config.default_args.get_config_dict()
+            default_args=transform_config.dag_config.get_config_dict()
         ) as dags:
             print("Loading data dependency dictionary")
-            data_dependency_dict = transform_utils.get_data_dependency(current_intertval)
+            data_dependency_dict = transform_utils.get_data_dependency(current_interval)
             if not data_dependency_dict:
                 try:
                     print("Data dependency dictionary loaded")
                     print("Got current run date")
 
-                    trigger_next_dag = TransformTriggerNextDag(
+                    trigger_next_dag = TransformTriggerDagOperator(
                         task_id=f"trigger_{next_dag_name}",
                         trigger_dag_id=next_dag_name,
                     )
@@ -92,7 +92,7 @@ def transform_dags(intertval_list: list) -> dict:
                                 # General idea is spin_up >> [all stages} >> shut-down
                                 try:
                                     # since stages have dependency, this need to be sorted(stage1 >> stage2)
-                                    spark_jobs_sorted_list = sorted(submit_spark_jobs.keys())
+                                    spark_jobs_sorted_list = sorted(submit_spark_jobs.keys()) #TODO this will have problem when stage >= 10 since sorted will considering stage10 before stage2
 
                                     spin_up_cluster >> submit_spark_jobs[spark_jobs_sorted_list[0]]
 
@@ -113,7 +113,7 @@ def transform_dags(intertval_list: list) -> dict:
 
 
                 except Exception as e:
-                    raise print(f"Issues with data dependency {current_intertval}: {e}")
+                    raise print(f"Issues with data dependency {current_interval}: {e}")
 
             else:
                 raise print("Unable to get data dependency dictionary")
@@ -122,7 +122,7 @@ def transform_dags(intertval_list: list) -> dict:
 
     return dags_dict
 
-dags = transform_dags(intertval_list = transform_config.INTERTVAL_LIST)
+dags = transform_dags(interval_list= transform_config.INTERTVAL_LIST)
 
 main_hub_biweekly = dags["main_hub_biweekly"]
 
