@@ -14,3 +14,7 @@ except ImportError:
     )
 
 transform_config = TransformationConfigs()
+
+class TransformationUtils:
+    def __init__(self):
+        pass

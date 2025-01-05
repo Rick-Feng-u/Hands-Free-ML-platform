@@ -17,7 +17,7 @@ except ImportError:
 
 env = os.getenv('ENV', 'exp')
 
-class TransformationConfig:
+class TransformationConfigs:
     def __init__(self, **kwargs):
         self.dag_config = dag_config(env)
         self.project_config = project_config(env)
@@ -31,9 +31,11 @@ class TransformationConfig:
         self.INTERTVAL_LIST = ["Biweekly"]
         self.retries = 2
 
-        self.num_workers = 4
+        self.num_of_workers = 4
         self.m_machine_type = "n2-standard-4"
         self.w_machine_type = "n2-standard-4"
+
+        self.dp_config = ""
 
         self.spark_prop = {"spark:spark.executor.cores": '5',
                             "spark:spark.executor.instances": '29',
