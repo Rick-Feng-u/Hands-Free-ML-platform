@@ -25,4 +25,4 @@ jobs:
 
       - name: Upload Files to GCS Bucket
         run: |
-          gsutil -m rsync -r . gs://your-bucket-name
+          gsutil -m rsync -r . gs://northamerica-northeast1-b/airflow_main/dags
